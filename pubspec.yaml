@@ -1,4 +1,4 @@
-name: ot_app
+name: TonkConnect
 description: Control your OpenTonk.
 
 # The following line prevents the package from being accidentally published to
@@ -23,6 +23,7 @@ environment:
 dependencies:
   wifi_configuration: ^1.2.1
   flutter_local_notifications: ^1.4.4+3
+  flutter_launcher_icons: ^0.7.2
   flutter:
     sdk: flutter
 

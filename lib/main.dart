@@ -98,11 +98,7 @@ class _MainPage extends State<MainPage> {
       msg += speed.abs().toString();
     }
 
-    if (this.isConnected) {
-      this.rightSpeed = speed;
-      print(msg);
-      this.udp.send(msg.codeUnits, this.endpoint);
-    }
+    this.udp.send(msg.codeUnits, this.endpoint);
   }
 
   void left(num speed) {
@@ -120,11 +116,7 @@ class _MainPage extends State<MainPage> {
       msg += speed.abs().toString();
     }
 
-    if (this.isConnected) {
-      this.leftSpeed = speed;
-      print(msg);
-      this.udp.send(msg.codeUnits, this.endpoint);
-    }
+    this.udp.send(msg.codeUnits, this.endpoint);
   }
 
   void onConnectBtn() async {

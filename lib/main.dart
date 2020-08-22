@@ -72,18 +72,14 @@ class _MainPage extends State<MainPage> {
           100;
       speed = speed.clamp(-99, 99).toInt();
 
-      if (speed != this.rightSpeed) {
-        right(speed);
-      }
+      right(speed);
     } else {
       speed = (this.left0point.dy - details.position.dy) /
           ((usableHeight * h) / 2) *
           100;
       speed = speed.clamp(-99, 99).toInt();
 
-      if (speed != this.leftSpeed) {
-        left(speed);
-      }
+      left(speed);
     }
   }
 
@@ -158,6 +154,7 @@ class _MainPage extends State<MainPage> {
 
       case WifiConnectionStatus.locationNotAllowed:
         print("locationNotAllowed");
+        Fluttertoast.showToast(msg: "Not allowed");
         break;
     }
 
@@ -165,10 +162,12 @@ class _MainPage extends State<MainPage> {
       this.udp = await UDP.bind(Endpoint.any());
       print('connected');
 
-      Fluttertoast.showToast(msg: "Connection established");
+      Fluttertoast.showToast(
+          msg: "Connection established", backgroundColor: Colors.green);
     } else {
       print('not connected');
-      Fluttertoast.showToast(msg: "Failed to connect");
+      Fluttertoast.showToast(
+          msg: "Failed to connect", backgroundColor: Colors.red);
     }
   }
 

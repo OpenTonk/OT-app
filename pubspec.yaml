@@ -24,6 +24,8 @@ dependencies:
   wifi_configuration: ^1.2.1
   flutter_local_notifications: ^1.4.4+3
   flutter_launcher_icons: ^0.7.2
+  udp: ^3.0.3
+  fluttertoast: ^7.0.2
   flutter:
     sdk: flutter
 

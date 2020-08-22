@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:wifi_configuration/wifi_configuration.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:udp/udp.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'dart:io';
 import 'dart:convert';
 
-FlutterLocalNotificationsPlugin notificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-var androidSettings = AndroidInitializationSettings('');
-var iosSettings = IOSInitializationSettings();
-var settings = InitializationSettings(androidSettings, iosSettings);
-
-var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-    'OT-n-1', 'OT-app', 'OpenTank notifications',
-    importance: Importance.Max, priority: Priority.High, ticker: 'ticker');
-var iOSPlatformChannelSpecifics = IOSNotificationDetails();
-var platformChannelSpecifics = NotificationDetails(
-    androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
-
 void main() {
-  notificationsPlugin.initialize(settings);
   runApp(MyApp());
 }
 
@@ -48,21 +35,20 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPage extends State<MainPage> {
-  String ssid = "OpenTank";
+  String ssid = "OpenTank-AP";
   String pass = "UltimateTonk";
 
-  String host = "192.168.4.1";
-  int port = 4200;
-
   bool isConnected = false;
-  Socket socket;
+  UDP udp;
+  Endpoint endpoint =
+      Endpoint.multicast(InternetAddress("192.168.4.1"), port: Port(4200));
 
   Offset right0point;
   Offset left0point;
-  double usableHeight = 0.6;
+  double usableHeight = 0.4;
 
-  num rightSpeed;
-  num leftSpeed;
+  num rightSpeed = 0;
+  num leftSpeed = 0;
 
   void _pointerDown(PointerEvent details) {
     print({"down", details.position});
@@ -102,7 +88,6 @@ class _MainPage extends State<MainPage> {
   }
 
   void right(num speed) {
-    this.rightSpeed = speed;
     String msg = "R";
 
     if (speed >= 0) {
@@ -117,15 +102,14 @@ class _MainPage extends State<MainPage> {
       msg += speed.abs().toString();
     }
 
-    print(msg);
-
     if (this.isConnected) {
-      this.socket.add(utf8.encode(msg));
+      this.rightSpeed = speed;
+      print(msg);
+      this.udp.send(msg.codeUnits, this.endpoint);
     }
   }
 
   void left(num speed) {
-    this.leftSpeed = speed;
     String msg = "L";
 
     if (speed >= 0) {
@@ -140,51 +124,51 @@ class _MainPage extends State<MainPage> {
       msg += speed.abs().toString();
     }
 
-    print(msg);
-
     if (this.isConnected) {
-      this.socket.add(utf8.encode(msg));
+      this.leftSpeed = speed;
+      print(msg);
+      this.udp.send(msg.codeUnits, this.endpoint);
     }
   }
 
   void onConnectBtn() async {
-    if (!this.isConnected) {
-      WifiConnectionStatus connStatus = await WifiConfiguration.connectToWifi(
-          this.ssid, this.pass, "com.example.ot_app");
+    WifiConnectionStatus connStatus = await WifiConfiguration.connectToWifi(
+        this.ssid, this.pass, "com.example.ot_app");
 
-      switch (connStatus) {
-        case WifiConnectionStatus.connected:
-          this.isConnected = true;
-          break;
+    switch (connStatus) {
+      case WifiConnectionStatus.connected:
+        this.isConnected = true;
+        break;
 
-        case WifiConnectionStatus.alreadyConnected:
-          this.isConnected = true;
-          break;
+      case WifiConnectionStatus.alreadyConnected:
+        this.isConnected = true;
+        break;
 
-        case WifiConnectionStatus.notConnected:
-          this.isConnected = false;
-          break;
+      case WifiConnectionStatus.notConnected:
+        this.isConnected = false;
+        break;
 
-        case WifiConnectionStatus.platformNotSupported:
-          print("platformNotSupported");
-          break;
+      case WifiConnectionStatus.platformNotSupported:
+        print("platformNotSupported");
+        break;
 
-        case WifiConnectionStatus.profileAlreadyInstalled:
-          print("profileAlreadyInstalled");
-          break;
+      case WifiConnectionStatus.profileAlreadyInstalled:
+        print("profileAlreadyInstalled");
+        break;
 
-        case WifiConnectionStatus.locationNotAllowed:
-          print("locationNotAllowed");
-          break;
-      }
+      case WifiConnectionStatus.locationNotAllowed:
+        print("locationNotAllowed");
+        break;
+    }
 
-      if (this.isConnected) {
-        this.socket = await Socket.connect(this.host, this.port);
-        print('connected');
-      } else {
-        await notificationsPlugin.show(0, 'Failed to connect',
-            'Failed to find your OpenTank hotspot', platformChannelSpecifics);
-      }
+    if (this.isConnected) {
+      this.udp = await UDP.bind(Endpoint.any());
+      print('connected');
+
+      Fluttertoast.showToast(msg: "Connection established");
+    } else {
+      print('not connected');
+      Fluttertoast.showToast(msg: "Failed to connect");
     }
   }
 

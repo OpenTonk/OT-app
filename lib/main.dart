@@ -59,7 +59,7 @@ class _MainPage extends State<MainPage> {
   void initState() {
     Timer.periodic(new Duration(milliseconds: 50), (timer) {
       this.loop();
-      print(this.udp);
+      //print(this.udp);
     });
     super.initState();
   }
@@ -67,7 +67,7 @@ class _MainPage extends State<MainPage> {
   void loop() {
     //print("update");
     if (this.isConnected) {
-      print(this.rightMsg());
+      //print(this.rightMsg());
       if (t) {
         this.udp.send(this.rightMsg().codeUnits, this.endpoint);
       } else {

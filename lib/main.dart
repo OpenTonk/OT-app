@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:wifi_configuration/wifi_configuration.dart';
 import 'package:udp/udp.dart';
@@ -50,6 +52,32 @@ class _MainPage extends State<MainPage> {
   num rightSpeed = 0;
   num leftSpeed = 0;
 
+  Timer loopTimer;
+  bool t = true;
+
+  @override
+  void initState() {
+    Timer.periodic(new Duration(milliseconds: 50), (timer) {
+      this.loop();
+      print(this.udp);
+    });
+    super.initState();
+  }
+
+  void loop() {
+    //print("update");
+    if (this.isConnected) {
+      print(this.rightMsg());
+      if (t) {
+        this.udp.send(this.rightMsg().codeUnits, this.endpoint);
+      } else {
+        this.udp.send(this.leftMsg().codeUnits, this.endpoint);
+      }
+
+      t = !t;
+    }
+  }
+
   void _pointerDown(PointerEvent details) {
     print({"down", details.position});
 
@@ -72,90 +100,86 @@ class _MainPage extends State<MainPage> {
           100;
       speed = speed.clamp(-99, 99).toInt();
 
-      right(speed);
+      this.rightSpeed = speed;
     } else {
       speed = (this.left0point.dy - details.position.dy) /
           ((usableHeight * h) / 2) *
           100;
       speed = speed.clamp(-99, 99).toInt();
 
-      left(speed);
+      this.leftSpeed = speed;
     }
   }
 
-  void right(num speed) {
+  String rightMsg() {
     String msg = "R";
 
-    if (speed >= 0) {
+    if (this.rightSpeed >= 0) {
       msg += "+";
     } else {
       msg += "-";
     }
 
-    if (speed.toString().length < 2) {
-      msg += "0" + speed.abs().toString();
+    if (this.rightSpeed.toString().length < 2) {
+      msg += "0" + this.rightSpeed.abs().toString();
     } else {
-      msg += speed.abs().toString();
+      msg += this.rightSpeed.abs().toString();
     }
 
-    if (this.isConnected) {
-      this.rightSpeed = speed;
-      print(msg);
-      this.udp.send(msg.codeUnits, this.endpoint);
-    }
+    return msg;
   }
 
-  void left(num speed) {
+  String leftMsg() {
     String msg = "L";
 
-    if (speed >= 0) {
+    if (this.leftSpeed >= 0) {
       msg += "+";
     } else {
       msg += "-";
     }
 
-    if (speed.toString().length < 2) {
-      msg += "0" + speed.abs().toString();
+    if (this.leftSpeed.toString().length < 2) {
+      msg += "0" + this.leftSpeed.abs().toString();
     } else {
-      msg += speed.abs().toString();
+      msg += this.leftSpeed.abs().toString();
     }
 
-    if (this.isConnected) {
-      this.leftSpeed = speed;
-      print(msg);
-      this.udp.send(msg.codeUnits, this.endpoint);
-    }
+    return msg;
   }
 
   void onConnectBtn() async {
-    WifiConnectionStatus connStatus = await WifiConfiguration.connectToWifi(
-        this.ssid, this.pass, "com.example.ot_app");
+    if (await WifiConfiguration.isConnectedToWifi(this.ssid)) {
+      this.isConnected = true;
+    } else {
+      WifiConnectionStatus connStatus = await WifiConfiguration.connectToWifi(
+          this.ssid, this.pass, "com.example.ot_app");
 
-    switch (connStatus) {
-      case WifiConnectionStatus.connected:
-        this.isConnected = true;
-        break;
+      switch (connStatus) {
+        case WifiConnectionStatus.connected:
+          this.isConnected = true;
+          break;
 
-      case WifiConnectionStatus.alreadyConnected:
-        this.isConnected = true;
-        break;
+        case WifiConnectionStatus.alreadyConnected:
+          this.isConnected = true;
+          break;
 
-      case WifiConnectionStatus.notConnected:
-        this.isConnected = false;
-        break;
+        case WifiConnectionStatus.notConnected:
+          this.isConnected = false;
+          break;
 
-      case WifiConnectionStatus.platformNotSupported:
-        print("platformNotSupported");
-        break;
+        case WifiConnectionStatus.platformNotSupported:
+          print("platformNotSupported");
+          break;
 
-      case WifiConnectionStatus.profileAlreadyInstalled:
-        print("profileAlreadyInstalled");
-        break;
+        case WifiConnectionStatus.profileAlreadyInstalled:
+          print("profileAlreadyInstalled");
+          break;
 
-      case WifiConnectionStatus.locationNotAllowed:
-        print("locationNotAllowed");
-        Fluttertoast.showToast(msg: "Not allowed");
-        break;
+        case WifiConnectionStatus.locationNotAllowed:
+          print("locationNotAllowed");
+          Fluttertoast.showToast(msg: "Not allowed");
+          break;
+      }
     }
 
     if (this.isConnected) {

@@ -57,7 +57,7 @@ class _MainPage extends State<MainPage> {
 
   @override
   void initState() {
-    Timer.periodic(new Duration(milliseconds: 50), (timer) {
+    Timer.periodic(new Duration(milliseconds: 25), (timer) {
       this.loop();
       //print(this.udp);
     });
